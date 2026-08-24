@@ -1,0 +1,25 @@
+{
+  "name": "banking-automation",
+  "version": "0.1.0",
+  "description": "SDET capstone: CI-integrated Playwright + TypeScript test automation suite for ParaBank, backed by manual QA artifacts, Postman API tests, and SQL data validation.",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test tests/ui",
+    "test:api": "playwright test tests/api",
+    "test:report": "playwright show-report",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"**/*.{ts,md,json}\"",
+    "sql:seed": "node sql/seed.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0",
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.5.0"
+  }
+}
