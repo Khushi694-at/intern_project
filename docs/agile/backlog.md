@@ -13,17 +13,17 @@ to the next sprint explicitly rather than silently carrying it.
 
 ## Sprint 1 — Manual QA & Test Design (Day 2)
 
-- [ ] As a tester, I can write a Test Plan (scope, strategy mapped to STLC, risks, entry/exit criteria).
-- [ ] As a tester, I have a requirement list and an RTM skeleton so coverage gaps are visible later.
-- [ ] As a tester, I can design ≥40 test cases across the core flows using positive/negative, BVA, and EP.
-- [ ] As a tester, I can do a first manual pass and log ≥6 bugs with severity, priority, and life-cycle state.
+- [x] As a tester, I can write a Test Plan (scope, strategy mapped to STLC, risks, entry/exit criteria).
+- [x] As a tester, I have a requirement list and an RTM skeleton so coverage gaps are visible later.
+- [x] As a tester, I can design ≥40 test cases across the core flows using positive/negative, BVA, and EP.
+- [x] As a tester, I can do a first manual pass and log ≥6 bugs with severity, priority, and life-cycle state.
 
 ## Sprint 2 — Framework Foundation (Days 3-4)
 
-- [ ] As an SDET, I can extend a `BasePage` class for shared navigation/wait/action behaviour.
-- [ ] As an SDET, I have typed test-data interfaces instead of loose objects.
-- [ ] As an SDET, I have a small utilities layer (config reader, logger, data generator).
-- [ ] As an SDET, I have 2-3 smoke tests proving the harness works, green in CI.
+- [x] As an SDET, I can extend a `BasePage` class for shared navigation/wait/action behaviour.
+- [x] As an SDET, I have typed test-data interfaces instead of loose objects.
+- [x] As an SDET, I have a small utilities layer (config reader, logger, data generator).
+- [x] As an SDET, I have 2-3 smoke tests proving the harness works, green in CI.
 
 ## Sprint 3 — UI Automation (Days 5-6)
 

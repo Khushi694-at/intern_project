@@ -4,7 +4,8 @@ A CI-integrated test automation suite for **ParaBank** (https://parabank.parasof
 combining manual QA artifacts with a Playwright + TypeScript automation framework, Postman API tests,
 and a SQL data-validation module.
 
-> Status: Sprint 0 (Setup & Discovery) — scaffolding in place, app explored. Automation code lands in Sprint 2+.
+> Status: Sprints 0–2 complete (Setup & Discovery, Manual QA & Test Design, Framework Foundation) — manual test
+> pack is written, the TS/OOP backbone and fixtures are in place, and a skeleton CI run is green.
 
 ## Stack
 
@@ -54,14 +55,18 @@ banking-automation/
 ## Docs
 
 - [`docs/exploration-notes.md`](docs/exploration-notes.md) — Day-1 walkthrough of every in-scope ParaBank flow, plus quirks found.
+- [`docs/test-plan.md`](docs/test-plan.md) — scope, strategy mapped to STLC, environment, risks, entry/exit criteria.
+- [`docs/test-cases.xlsx`](docs/test-cases.xlsx) — 69 manual test cases (positive/negative, BVA/EP tagged) across all 7 in-scope journeys, plus a Requirements sheet (the RTM) and a Summary sheet.
+- [`docs/bug-reports.md`](docs/bug-reports.md) — 6 defects found during the first manual pass, with severity, priority, repro steps, and life-cycle state.
 - [`docs/agile/backlog.md`](docs/agile/backlog.md) — sprint backlog, user stories.
 - [`docs/agile/standup.md`](docs/agile/standup.md) — daily standup log.
 
-(Test plan, test cases, RTM, bug reports, AI-usage log, and the final report are added in later sprints —
+(Postman collection, automated API/SQL/UI tests, AI-usage log, and the final report are added in later sprints —
 see the project brief for the full 10-day plan.)
 
 ## Viewing the CI report
 
-Once the GitHub Actions workflow (`.github/workflows/ci.yml`) is wired up in Sprint 5, every push/PR to `main`
-uploads the Playwright HTML report as a build artifact — download it from the workflow run's **Artifacts** section
-and open `index.html`.
+The GitHub Actions workflow (`.github/workflows/ci.yml`) runs lint + the full Playwright suite on every push/PR to
+`main` and uploads the HTML report as a build artifact — download it from the workflow run's **Artifacts** section
+and open `index.html`. It's a Sprint 2 skeleton (single Chromium project, no sharding); reporting polish lands in
+Sprint 5.
