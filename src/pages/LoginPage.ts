@@ -9,6 +9,7 @@ export class LoginPage extends BasePage {
   private readonly loginButton: Locator = this.page.locator('input[value="Log In"]');
 
   readonly registerLink: Locator = this.page.getByRole('link', { name: 'Register' });
+  readonly errorMessage: Locator = this.page.locator('p.error');
 
   async login(username: string, password: string): Promise<void> {
     this.logger.info(`Logging in as "${username}"`);
