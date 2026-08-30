@@ -39,7 +39,18 @@ interface Fixtures {
   fundedAccount: { primaryAccountId: string; sourceAccountId: string };
   /** As `fundedAccount`, plus a second freshly opened $100 account for cross-account journeys. */
   twoFundedAccounts: { primaryAccountId: string; secondaryAccountId: string };
+  /** Auto-fixture: not requested directly, just paces requests below ParaBank's CI rate limit. */
+  requestPacing: void;
 }
+
+/**
+ * A burst of back-to-back requests from CI's shared runner IPs reliably trips a multi-minute
+ * rate-limit/cooldown on ParaBank's demo instance (every page, unrelated to what the test does,
+ * starts timing out) — never observed from a residential IP. Spacing requests out in CI keeps the
+ * suite under whatever threshold that is; this is a deliberate network-pacing measure, not a
+ * fixed wait for UI state.
+ */
+const CI_REQUEST_PACING_MS = 3000;
 
 export const test = base.extend<Fixtures>({
   // eslint-disable-next-line no-empty-pattern -- Playwright's fixture signature requires this shape.
@@ -96,6 +107,16 @@ export const test = base.extend<Fixtures>({
 
     await use({ primaryAccountId: fundedAccount.primaryAccountId, secondaryAccountId });
   },
+  requestPacing: [
+    // eslint-disable-next-line no-empty-pattern -- Playwright's fixture signature requires this shape.
+    async ({}, use) => {
+      await use();
+      if (process.env.CI) {
+        await new Promise((resolve) => setTimeout(resolve, CI_REQUEST_PACING_MS));
+      }
+    },
+    { auto: true },
+  ],
 });
 
 export { expect } from '@playwright/test';
