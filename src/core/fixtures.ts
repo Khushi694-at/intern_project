@@ -16,6 +16,14 @@ interface RegisteredCustomer {
   checkingAccountId: string;
 }
 
+/**
+ * ParaBank's public demo has no dedicated per-test tenant, and its registration endpoint isn't
+ * always available (the shared instance can reject every new signup — see registration-login.spec.ts).
+ * These journeys don't need a *new* customer though, just an account nobody else's test will touch,
+ * so they log into the permanently-seeded demo user and open fresh accounts under it instead.
+ */
+const SHARED_DEMO_CREDENTIALS = { username: 'john', password: 'demo' };
+
 interface Fixtures {
   logger: Logger;
   loginPage: LoginPage;
@@ -27,8 +35,10 @@ interface Fixtures {
   findTransactionsPage: FindTransactionsPage;
   /** A freshly registered, logged-in customer with one funded CHECKING account. */
   registeredCustomer: RegisteredCustomer;
-  /** A registered customer that has also opened a second, SAVINGS account. */
-  customerWithTwoAccounts: RegisteredCustomer & { savingsAccountId: string };
+  /** Logged into the shared demo user, with one freshly opened, exactly-$100 account nobody else owns. */
+  fundedAccount: { primaryAccountId: string; sourceAccountId: string };
+  /** As `fundedAccount`, plus a second freshly opened $100 account for cross-account journeys. */
+  twoFundedAccounts: { primaryAccountId: string; secondaryAccountId: string };
 }
 
 export const test = base.extend<Fixtures>({
@@ -68,10 +78,23 @@ export const test = base.extend<Fixtures>({
 
     await use({ data, checkingAccountId });
   },
-  customerWithTwoAccounts: async ({ registeredCustomer, openAccountPage }, use) => {
+  fundedAccount: async ({ loginPage, overviewPage, openAccountPage }, use) => {
+    await loginPage.goto();
+    await loginPage.login(SHARED_DEMO_CREDENTIALS.username, SHARED_DEMO_CREDENTIALS.password);
+
+    await overviewPage.goto();
+    const sourceAccountId = await overviewPage.getFirstAccountId();
+
     await openAccountPage.goto();
-    const savingsAccountId = await openAccountPage.openAccount('SAVINGS', registeredCustomer.checkingAccountId);
-    await use({ ...registeredCustomer, savingsAccountId });
+    const primaryAccountId = await openAccountPage.openAccount('CHECKING', sourceAccountId);
+
+    await use({ primaryAccountId, sourceAccountId });
+  },
+  twoFundedAccounts: async ({ fundedAccount, openAccountPage }, use) => {
+    await openAccountPage.goto();
+    const secondaryAccountId = await openAccountPage.openAccount('SAVINGS', fundedAccount.sourceAccountId);
+
+    await use({ primaryAccountId: fundedAccount.primaryAccountId, secondaryAccountId });
   },
 });
 
