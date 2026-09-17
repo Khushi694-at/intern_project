@@ -3,7 +3,6 @@
 **Application Under Test:** ParaBank — https://parabank.parasoft.com/parabank/index.htm
 **Test account used:** `sdettester0826a` (checking account #26997, savings account #27330)
 **Date found:** 2026-08-26
-**Found by:** SDET Intern, manual exploratory + negative testing
 
 All defects below were reproduced live against the public ParaBank demo instance and are tied back to their originating test case in `test-cases.xlsx`.
 

@@ -90,3 +90,33 @@ changed, and how each was verified.
   forget).
   **Verified:** `npx playwright test tests/sql` and a full local `npm test` run both confirmed the
   database exists and is freshly seeded before the suite starts.
+
+## Sprint 6 (Concurrency / Race-Condition Testing)
+
+- **Task:** Add an automated race-condition test for ParaBank's transfer service
+  (`tests/api/race-condition.spec.ts`) and a companion write-up
+  (`docs/race-condition-report.md`).
+  **First draft (wrong assumption):** guessed that a small burst (5 concurrent transfers of the
+  same amount from one account) would be enough to expose a lost-update race, and wrote the test's
+  assertions before running it.
+  **How it was caught:** ran it live first. At 5 concurrent requests both accounts landed on the
+  exact expected balance every time — no race observed. Rather than keep the guessed assertions,
+  the concurrency was raised (manually, with `curl`, run in truly parallel OS processes, then
+  reproduced through the Playwright test itself) until a real discrepancy showed up: at 15
+  concurrent transfers, the destination account was credited the full amount every time, but the
+  source account was short-debited by 2–3 of the 15 transfers in 2 of 3 single-burst attempts — the
+  third attempt at the same concurrency landed with no lost update at all, showing the race is
+  genuinely timing-dependent rather than deterministic.
+  **Accepted:** rather than assert on a single burst (which would make the test flaky in the "no
+  race observed" direction roughly 1 run in 3), the final test repeats the 15-concurrent-transfer
+  burst 3 times against fresh accounts in one run and asserts at least one round shows a lost
+  update — plus assertions on the *direction* of the discrepancy (source keeps more than expected)
+  rather than an exact lost-update count, since the count varies attempt to attempt.
+  **Verified:** reproduced live 2 of 3 times at a single 15-concurrent-transfer burst before the
+  multi-round version of the test or the report were finalized. Manual `curl`-based probing at
+  higher concurrency (20 parallel requests) also surfaced two
+  operational findings folded into the report instead of the test: ParaBank's shared demo instance
+  rate-limits bursts of many separate connections (Cloudflare error 1015), and its seed data appears
+  to reset independently of this suite (an account created minutes earlier became unreachable, and
+  a later account ID was found reassigned to a different customer) — both are why the test creates
+  its own throwaway accounts per run instead of hardcoding IDs.
