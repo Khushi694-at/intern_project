@@ -1,6 +1,6 @@
 import { test, expect } from '../../src/core/fixtures';
 import type { AccountType } from '../../src/data/types';
-
+// verify first ac bal must be 100 $
 test.describe('Accounts Overview', () => {
   test('lists a freshly opened account with its exact $100 opening balance', async ({ overviewPage, fundedAccount }) => {
     await overviewPage.goto();
@@ -10,6 +10,7 @@ test.describe('Accounts Overview', () => {
   });
 });
 
+// when savings and checking accounts are created, an internal transfer occurs new ac should have 100  src ac should has 0
 test.describe('Open New Account', () => {
   const ACCOUNT_TYPES: AccountType[] = ['SAVINGS', 'CHECKING'];
 
@@ -29,7 +30,7 @@ test.describe('Open New Account', () => {
       expect(await overviewPage.getBalance(primaryAccountId)).toBe(0);
     });
   }
-
+  // same user acc so a persons net total should be same 
   test('opening a new account moves money internally, so the overview total is unchanged', async ({
     openAccountPage,
     overviewPage,

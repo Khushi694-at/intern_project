@@ -9,10 +9,10 @@ export class OverviewPage extends BasePage {
   private readonly rows: Locator = this.page.locator('#accountTable tbody tr');
 
   /** The account rows load asynchronously via AJAX; wait for at least one before reading them. */
-  async waitForAccountsLoaded(): Promise<void> {
+  async waitForAccountsLoaded(): Promise<void> {  //wait till first row is found utnill thn keep trying
     await expect(this.rows.first()).toBeVisible();
   }
-
+ // get account row for a particular account
   private accountRow(accountId: string): Locator {
     return this.rows.filter({ has: this.page.locator('a', { hasText: accountId }) });
   }

@@ -41,3 +41,31 @@ export interface BillPayData {
   amount: number;
   fromAccountId: string;
 }
+
+/** Shape of ParaBank REST's `/accounts/{id}` and `/customers/{id}/accounts` responses. */
+export interface ApiAccount {
+  id: number;
+  customerId: number;
+  type: AccountType;
+  balance: number;
+}
+
+/** Shape of ParaBank REST's `/customers/{id}` and `/login/{username}/{password}` responses. */
+export interface ApiCustomer {
+  id: number;
+  firstName: string;
+  lastName: string;
+  address: Omit<Address, 'phoneNumber' | 'ssn'>;
+  phoneNumber: string;
+  ssn: string;
+}
+
+/** Shape of ParaBank REST's transaction-search responses (by id/amount/date). */
+export interface ApiTransaction {
+  id: number;
+  accountId: number;
+  type: 'Debit' | 'Credit';
+  date: number;
+  amount: number;
+  description: string;
+}

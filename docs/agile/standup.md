@@ -51,3 +51,62 @@ One or two lines per working day: what I did, what's next, any blockers.
   been written as loose files outside the repo, into `docs/` where the project brief expects them.
 - **Next:** Re-run `npm install` at the new root and confirm CI actually triggers on the next push.
 - **Blockers:** None.
+
+## Day 5 — 2026-08-30 (Sprint 3: UI Automation, Days 5-6)
+
+- **Did:** Built out the remaining page objects (`OverviewPage`, `OpenAccountPage`, `TransferFundsPage`,
+  `BillPayPage`, `FindTransactionsPage`) and the fixtures that wire them together, then automated the core
+  journeys: data-driven registration/login, account overview + open-account (asserting the exact $100 opening
+  balance), transfer funds and bill pay (asserting balance deltas, not just confirmation text), and
+  find-transactions across all four search modes plus a negative case. Two balance-asserting tests deliberately
+  drive an account over-balance/negative to confirm BUG-01/BUG-02 are still open, rather than assuming they'd
+  been fixed.
+- **Next:** Stabilise against ParaBank's shared-instance flakiness, then start Sprint 4 (API/Postman/SQL).
+- **Blockers:** ParaBank's registration endpoint intermittently rejected every new signup on the shared demo
+  instance — reworked the balance-asserting journeys (transfer, bill pay, open-account) to log into the
+  permanently-seeded `john`/`demo` user instead of registering a fresh customer per test, since those journeys
+  only need *an* account, not a *new customer*.
+
+## Day 6 — 2026-08-31 (Sprint 3 stabilisation)
+
+- **Did:** Diagnosed CI-only failures (every page timing out, unrelated to what the test did) as ParaBank's
+  shared demo instance rate-limiting/cooling down under CI's burst of back-to-back requests — never reproduced
+  from a residential IP. Added a `requestPacing` auto-fixture that pauses between tests in CI only, and pinned
+  the config to a single worker so parallel workers can't race each other's transfers/payments against the one
+  shared account. All 24 UI tests green, locally and in CI.
+- **Next:** Sprint 4 — Postman collection, automated API tests, hybrid test, SQL data-validation module.
+- **Blockers:** None.
+
+## Day 7 — 2026-09-17 (Sprint 4: API & Data, Days 7-8)
+
+- **Did:** Before writing any client code, probed every planned ParaBank REST endpoint live with `curl` to
+  confirm its real shape rather than assume it from the UI/docs — good thing: `createAccount` turned out to
+  live at `POST /createAccount?customerId=&newAccountType=&fromAccountId=` (query params), not the
+  `/accounts/{customerId}/{type}/{fromAccountId}` path shape the rest of `/accounts` would suggest, and
+  "find transaction by id" is unscoped (`/transactions/{id}`), not nested under `/accounts/{accountId}/...`.
+  Built `ParaBankApiClient` and 12 automated API tests (customer/account lookups, login, create-account +
+  transfer with polling for the async $100 opening deposit, transaction search, and one hybrid test that
+  creates an account via the API and verifies it through the UI overview page) plus a matching 12-request
+  Postman collection, cross-checked against the Playwright suite with `newman`. Also built the SQL layer:
+  a seeded `customers`/`accounts`/`transactions` schema, a typed `BankDatabase` module (SELECT+WHERE, ranged
+  WHERE, JOIN, JOIN+GROUP BY), and 4 tests — one of which independently recomputes the expected total in
+  TypeScript rather than trusting the SQL aggregate at face value.
+- **Next:** Sprint 5 — wire the SQL seed into CI (`globalSetup`), add a typecheck step, and finish the AI-usage
+  log, locator-strategy doc, README, and final report.
+- **Blockers:** Verifying the Postman collection with rapid-fire `newman` runs right after building it tripped
+  the same rate-limit/cooldown on ParaBank's shared instance that Sprint 3 hit in CI — this time from a local
+  dev machine, confirming it's IP-burst-triggered rather than CI-specific. Waited it out and re-verified rather
+  than assuming the collection itself was wrong.
+
+## Day 8 — 2026-09-17 (Sprint 5: CI/CD, Reporting & Polish, Days 9-10)
+
+- **Did:** Added `globalSetup` to `playwright.config.ts` so `sql/bank.sqlite` is reseeded automatically before
+  every test run (no separate CI step to forget), added a `typecheck` script/CI step ahead of the test run, and
+  wrote the remaining docs the brief requires: `docs/locators.md` (locator-priority strategy, and why some CSS
+  id/attribute selectors are still "resilient" given ParaBank's markup), `docs/ai-usage-log.md`, and
+  `docs/final-report.md`. Updated the README and this backlog to reflect Sprints 3-5 as complete.
+- **Next:** Push, open a PR to `main`, and confirm the pipeline is green with the HTML report attached before
+  submission.
+- **Blockers:** None. One known gap called out honestly in the final report rather than glossed over: the RTM
+  (`docs/test-cases.xlsx`) still traces manual/UI test cases only — it doesn't yet have rows for the new API/SQL
+  automated tests.

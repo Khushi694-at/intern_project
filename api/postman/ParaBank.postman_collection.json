@@ -1,0 +1,426 @@
+{
+  "info": {
+    "_postman_id": "a1e5c2d4-6f3b-4a9a-9d2e-parabank-coll-01",
+    "name": "ParaBank REST Services",
+    "description": "Covers the ParaBank REST services (/parabank/services/bank) exercised by the automation suite: customer/account lookups, account creation, fund transfers, and transaction search. Every request and assertion here was confirmed against the live service before being written down — two endpoints (createAccount, transactions/{id}) are NOT shaped the way the rest of the /accounts resource would suggest; see each request's description.\n\nRun order matters within a folder when using the Collection Runner: Create Account must run before Get New Account/Transfer/Transactions, since it populates {{newAccountId}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Customers & Accounts",
+      "item": [
+        {
+          "name": "Login - valid credentials",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/login/john/demo",
+              "host": ["{{baseUrl}}"],
+              "path": ["login", "john", "demo"]
+            },
+            "description": "ParaBank's permanently-seeded shared demo user."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns the matching customer', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.id).to.eql(Number(pm.environment.get('customerId')));",
+                  "  pm.expect(body.firstName).to.eql('John');",
+                  "  pm.expect(body.lastName).to.eql('Smith');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Login - invalid password",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/login/john/not-the-real-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["login", "john", "not-the-real-password"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Customer",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/customers/{{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "{{customerId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is the requested customer', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.id).to.eql(Number(pm.environment.get('customerId')));",
+                  "  pm.expect(body).to.have.property('firstName');",
+                  "  pm.expect(body).to.have.property('lastName');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Accounts For Customer",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/customers/{{customerId}}/accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "{{customerId}}", "accounts"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns a non-empty array owned entirely by this customer', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.be.an('array').that.is.not.empty;",
+                  "  const customerId = Number(pm.environment.get('customerId'));",
+                  "  body.forEach((account) => pm.expect(account.customerId).to.eql(customerId));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get Account By Id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{sourceAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["accounts", "{{sourceAccountId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns the requested account with a numeric balance', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.id).to.eql(Number(pm.environment.get('sourceAccountId')));",
+                  "  pm.expect(body.balance).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Create Account",
+      "item": [
+        {
+          "name": "Create Account (CHECKING)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/createAccount?customerId={{customerId}}&newAccountType=0&fromAccountId={{sourceAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["createAccount"],
+              "query": [
+                { "key": "customerId", "value": "{{customerId}}" },
+                { "key": "newAccountType", "value": "0" },
+                { "key": "fromAccountId", "value": "{{sourceAccountId}}" }
+              ]
+            },
+            "description": "Lives at /createAccount?customerId=&newAccountType=&fromAccountId= (query params), NOT at /accounts/{customerId}/{type}/{fromAccountId} as the rest of the /accounts resource shape would suggest — confirmed by probing the live service (a path-based first guess 404s). newAccountType is a code: 0 = CHECKING, 1 = SAVINGS."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Creates a CHECKING account for this customer', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.customerId).to.eql(Number(pm.environment.get('customerId')));",
+                  "  pm.expect(body.type).to.eql('CHECKING');",
+                  "  pm.environment.set('newAccountId', body.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Get New Account",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{newAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["accounts", "{{newAccountId}}"]
+            },
+            "description": "The account's $100 opening deposit is applied by an async internal transfer moments after creation — the createAccount response itself reports balance: 0. Run this request again a few seconds later if you need to see it land at $100 (the Playwright suite polls for this; a single Postman run only checks the account's shape)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns the newly created account', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.id).to.eql(Number(pm.environment.get('newAccountId')));",
+                  "  pm.expect(body.balance).to.be.at.least(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transfer",
+      "item": [
+        {
+          "name": "Transfer Funds",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/transfer?fromAccountId={{sourceAccountId}}&toAccountId={{newAccountId}}&amount={{transferAmount}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["transfer"],
+              "query": [
+                { "key": "fromAccountId", "value": "{{sourceAccountId}}" },
+                { "key": "toAccountId", "value": "{{newAccountId}}" },
+                { "key": "amount", "value": "{{transferAmount}}" }
+              ]
+            },
+            "description": "Run after Create Account, since it needs {{newAccountId}}."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Confirms the transfer in plain text', function () {",
+                  "  pm.expect(pm.response.text()).to.include('Successfully transferred');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Find Transactions By Amount",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{newAccountId}}/transactions/amount/{{transferAmount}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["accounts", "{{newAccountId}}", "transactions", "amount", "{{transferAmount}}"]
+            },
+            "description": "Run after Transfer Funds, so the new account has a transaction at {{transferAmount}} to find."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Finds at least one matching transaction', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.be.an('array').that.is.not.empty;",
+                  "  pm.expect(body[0].amount).to.eql(Number(pm.environment.get('transferAmount')));",
+                  "  pm.environment.set('foundTransactionId', body[0].id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Find Transaction By Id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/{{foundTransactionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions", "{{foundTransactionId}}"]
+            },
+            "description": "Unscoped by design: /transactions/{id}, NOT nested under /accounts/{accountId}/... like the amount/date searches. Confirmed live: the account-scoped path 404s even for a transaction that really does belong to that account."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns the transaction found by the amount search', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.id).to.eql(Number(pm.environment.get('foundTransactionId')));",
+                  "  pm.expect(body.accountId).to.eql(Number(pm.environment.get('newAccountId')));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Find Transaction By Id - Not Found",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/transactions/999999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions", "999999999"]
+            },
+            "description": "API-level counterpart of BUG-04 (the UI's Find Transactions by ID surfaces a generic internal-error page for the same case)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response explains the transaction was not found', function () {",
+                  "  pm.expect(pm.response.text()).to.include('Could not find transaction');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Find Transactions By Date Range",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/accounts/{{newAccountId}}/transactions/fromDate/1-1-2020/toDate/12-31-2030",
+              "host": ["{{baseUrl}}"],
+              "path": ["accounts", "{{newAccountId}}", "transactions", "fromDate", "1-1-2020", "toDate", "12-31-2030"]
+            },
+            "description": "Date format is M-D-YYYY, matching the Find Transactions UI form."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Finds at least the opening-deposit and transfer transactions', function () {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.be.an('array').that.is.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}

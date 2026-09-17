@@ -3,6 +3,7 @@ import { config } from './src/utils/config';
 
 export default defineConfig({
   testDir: './tests',
+  globalSetup: require.resolve('./src/core/global-setup'),
   fullyParallel: true,
   // Several UI tests share ParaBank's single persistent seeded demo account (no dedicated
   // per-test account, since registration isn't always available on the shared instance) and
