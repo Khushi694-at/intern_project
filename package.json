@@ -7,20 +7,24 @@
     "test": "playwright test",
     "test:ui": "playwright test tests/ui",
     "test:api": "playwright test tests/api",
+    "test:sql": "playwright test tests/sql",
     "test:report": "playwright show-report",
     "lint": "eslint . --ext .ts",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,md,json}\"",
     "sql:seed": "node sql/seed.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.47.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.14.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
+    "better-sqlite3": "^11.10.0",
+    "dotenv": "^16.4.5",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.3.0",
-    "typescript": "^5.5.0",
-    "dotenv": "^16.4.5"
+    "typescript": "^5.5.0"
   }
 }

@@ -1,6 +1,7 @@
 import { test, expect } from '../../src/core/fixtures';
 import { generateBillPayData } from '../../src/utils/data-generator';
 
+// proper funding
 test.describe('Transfer Funds', () => {
   test('transferring funds between two owned accounts moves the exact amount both ways', async ({
     transferFundsPage,
@@ -18,7 +19,7 @@ test.describe('Transfer Funds', () => {
     expect(await overviewPage.getBalance(primaryAccountId)).toBe(50);
     expect(await overviewPage.getBalance(secondaryAccountId)).toBe(150);
   });
-
+// invalid case- making account balance negative
   test('transferring more than the available balance still succeeds and drives the source account negative (tracks BUG-01)', async ({
     transferFundsPage,
     overviewPage,
@@ -40,7 +41,7 @@ test.describe('Transfer Funds', () => {
     expect(await overviewPage.getBalance(secondaryAccountId)).toBe(100 + 999_999);
   });
 });
-
+ //suite 2: billay pay proper one 
 test.describe('Bill Pay', () => {
   test('paying a bill debits the paying account by the exact payment amount', async ({
     billPayPage,
@@ -59,6 +60,7 @@ test.describe('Bill Pay', () => {
     expect(await overviewPage.getBalance(primaryAccountId)).toBe(75);
   });
 
+  // bill pay: left blank places 
   test('submitting with required fields left blank surfaces a validation message per field', async ({
     billPayPage,
     fundedAccount,
@@ -80,7 +82,7 @@ test.describe('Bill Pay', () => {
     await expect(billPayPage.validationError('verifyAccount-empty')).toBeVisible();
     await expect(billPayPage.resultHeading).toBeHidden();
   });
-
+// invali dbil : acc number mismatch
   test('an account number that does not match its verification field is rejected', async ({
     billPayPage,
     fundedAccount,

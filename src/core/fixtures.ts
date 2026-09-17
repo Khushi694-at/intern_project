@@ -8,6 +8,7 @@ import { BillPayPage } from '../pages/BillPayPage';
 import { FindTransactionsPage } from '../pages/FindTransactionsPage';
 import { createLogger, type Logger } from '../utils/logger';
 import { generateRegistrationData } from '../utils/data-generator';
+import { pauseForRequestPacing } from './request-pacing';
 import type { RegistrationData } from '../data/types';
 
 interface RegisteredCustomer {
@@ -42,15 +43,6 @@ interface Fixtures {
   /** Auto-fixture: not requested directly, just paces requests below ParaBank's CI rate limit. */
   requestPacing: void;
 }
-
-/**
- * A burst of back-to-back requests from CI's shared runner IPs reliably trips a multi-minute
- * rate-limit/cooldown on ParaBank's demo instance (every page, unrelated to what the test does,
- * starts timing out) — never observed from a residential IP. Spacing requests out in CI keeps the
- * suite under whatever threshold that is; this is a deliberate network-pacing measure, not a
- * fixed wait for UI state.
- */
-const CI_REQUEST_PACING_MS = 3000;
 
 export const test = base.extend<Fixtures>({
   // eslint-disable-next-line no-empty-pattern -- Playwright's fixture signature requires this shape.
@@ -103,7 +95,10 @@ export const test = base.extend<Fixtures>({
   },
   twoFundedAccounts: async ({ fundedAccount, openAccountPage }, use) => {
     await openAccountPage.goto();
-    const secondaryAccountId = await openAccountPage.openAccount('SAVINGS', fundedAccount.sourceAccountId);
+    const secondaryAccountId = await openAccountPage.openAccount(
+      'SAVINGS',
+      fundedAccount.sourceAccountId,
+    );
 
     await use({ primaryAccountId: fundedAccount.primaryAccountId, secondaryAccountId });
   },
@@ -111,9 +106,7 @@ export const test = base.extend<Fixtures>({
     // eslint-disable-next-line no-empty-pattern -- Playwright's fixture signature requires this shape.
     async ({}, use) => {
       await use();
-      if (process.env.CI) {
-        await new Promise((resolve) => setTimeout(resolve, CI_REQUEST_PACING_MS));
-      }
+      await pauseForRequestPacing();
     },
     { auto: true },
   ],
